@@ -1,11 +1,11 @@
 #pragma once
 
 #include "configs.h"
+#include <stddef.h>
 
 #ifdef HAS_TOUCH
 
 #include "Display.h"
-#include <stddef.h>
 #include <stdint.h>
 
 enum KeyboardResult {
@@ -27,5 +27,11 @@ enum KeyboardResult {
  * @return true if user pressed OK, false if user pressed CANCEL (or if buffer invalid).
  */
 bool keyboardInput(char *buffer, size_t bufLen, const char *title = nullptr);
+
+#else
+
+inline bool keyboardInput(char *, size_t, const char * = nullptr) {
+  return false;
+}
 
 #endif

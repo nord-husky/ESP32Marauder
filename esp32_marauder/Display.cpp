@@ -42,7 +42,13 @@ int8_t Display::menuButton(uint16_t *x, uint16_t *y, bool pressed, bool check_ho
 uint8_t Display::updateTouch(uint16_t *x, uint16_t *y, uint16_t threshold) {
   #ifdef HAS_ILI9341
     if (!this->headless_mode)
-      #ifndef HAS_CYD_TOUCH
+      #if defined(CYD_2432S022)
+        #if defined(CYD_2432S022C_TOUCH)
+          return this->tft.getTouch(x, y);
+        #else
+          return 0;
+        #endif
+      #elif !defined(HAS_CYD_TOUCH)
         return this->tft.getTouch(x, y, threshold);
       #else
         if (this->touchscreen.tirqTouched() && this->touchscreen.touched()) {
@@ -118,7 +124,7 @@ void Display::init() {
 }
 
 void Display::setCalData(bool landscape) {
-  #ifndef HAS_CYD_TOUCH
+  #if !defined(HAS_CYD_TOUCH) && !defined(HAS_LGFX_DISPLAY)
     if (!landscape) {
       #ifdef TFT_SHIELD
         uint16_t calData[5] = { 275, 3494, 361, 3528, 4 }; // tft.setRotation(0); // Portrait with TFT Shield
@@ -176,7 +182,7 @@ void Display::RunSetup() {
 
   #ifdef HAS_ILI9341
 
-    #ifndef HAS_CYD_TOUCH
+    #if !defined(HAS_CYD_TOUCH) && !defined(HAS_LGFX_DISPLAY)
       this->setCalData();
     #endif
 
@@ -495,7 +501,7 @@ void Display::scrollScreenBuffer(bool down) {
 }
 #endif
 
-void Display::processAndPrintString(TFT_eSPI& tft, const String& originalString) {
+void Display::processAndPrintString(MarauderTFT& tft, const String& originalString) {
   // Define colors
   uint16_t text_color = TFT_GREEN; // Default text color
   uint16_t background_color = TFT_BLACK; // Default background color

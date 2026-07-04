@@ -29,6 +29,8 @@
   //#define MARAUDER_CYD_2USB // Another 2432S028 but it has tWo UsBs OoOoOoO
   //#define MARAUDER_CYD_GUITION // ESP32-2432S024 GUITION
   //#define MARAUDER_CYD_3_5_INCH
+  //#define CYD_2432S022 // ESP32-2432S022, ST7789 240x320 parallel/i80 via LovyanGFX
+  //#define CYD_2432S022C_TOUCH // Optional ESP32-2432S022C CST820/CST816-family I2C touch
   //#define MARAUDER_C5
   //#define MARAUDER_CARDPUTER
   //#define MARAUDER_CARDPUTER_ADV
@@ -37,6 +39,10 @@
   //#define MARAUDER_M5_NANO_C6
   //#define DUAL_MINI_C5
   //// END BOARD TARGETS
+
+  #if defined(ESP32_2432S022) && !defined(CYD_2432S022)
+    #define CYD_2432S022
+  #endif
 
   #define JSON_SETTING_SIZE 2048
 
@@ -87,6 +93,8 @@
     #define HARDWARE_NAME "CYD 3.5inch"
   #elif defined(MARAUDER_CYD_GUITION)
     #define HARDWARE_NAME "CYD 2432S024 GUITION"
+  #elif defined(CYD_2432S022)
+    #define HARDWARE_NAME "CYD 2432S022"
   #elif defined(MARAUDER_KIT)
     #define HARDWARE_NAME "Marauder Kit"
   #elif defined(MARAUDER_FLIPPER)
@@ -361,6 +369,28 @@
     #define HAS_GPS
     //#define HAS_CYD_TOUCH
     //#define HAS_NIMBLE_2
+  #endif
+
+  #ifdef CYD_2432S022
+    #if defined(CYD_2432S022C_TOUCH)
+      #define HAS_TOUCH
+    #endif
+    //#define FLIPPER_ZERO_HAT
+    //#define HAS_BATTERY
+    #define HAS_BT
+    #define HAS_BT_REMOTE
+    //#define HAS_BUTTONS
+    //#define HAS_NEOPIXEL_LED
+    //#define HAS_PWR_MGMT
+    #define HAS_SCREEN
+    #define HAS_FULL_SCREEN
+    // SD card pins are not confirmed for ESP32-2432S022. Do not enable HAS_SD here.
+    //#define HAS_TEMP_SENSOR
+    // GPS pins are not confirmed and known CYD GPS pins conflict with display/touch pins.
+    //#define HAS_GPS
+    #define HAS_LGFX_DISPLAY
+    #define HAS_NIMBLE_2
+    #define HAS_IDF_3
   #endif
 
   #ifdef MARAUDER_KIT
@@ -1580,6 +1610,91 @@
       #define KIT_LED_BUILTIN 13
     #endif
 
+    #if defined(CYD_2432S022)
+      #define CHAN_PER_PAGE 7
+
+      #define SCREEN_CHAR_WIDTH 40
+      #define HAS_ILI9341
+      #define HAS_ST7789
+
+      #define BANNER_TEXT_SIZE 2
+
+      #ifndef TFT_WIDTH
+        #define TFT_WIDTH 240
+      #endif
+
+      #ifndef TFT_HEIGHT
+        #define TFT_HEIGHT 320
+      #endif
+
+      // ESP32-2432S022 display pins from openHASP #606 and TFT_eSPI #3281.
+      #define TFT_CS 17
+      // Backlight is the only conflicted pin. TFT_eSPI #3281 reports GPIO0
+      // active-high for ESP32-2432S022; openHASP #606 lists GPIO5 as a
+      // configurable placeholder. Do not map GPIO0 as a button on this target.
+      #ifndef TFT_BL
+        #define TFT_BL 0
+      #endif
+
+      // LovyanGFX panel/touch rotation offsets. Override from build flags if
+      // hardware testing shows this board revision needs a different offset.
+      #ifndef CYD_2432S022_OFFSET_ROTATION
+        #define CYD_2432S022_OFFSET_ROTATION 0
+      #endif
+
+      #ifndef CYD_2432S022_TOUCH_OFFSET_ROTATION
+        #define CYD_2432S022_TOUCH_OFFSET_ROTATION 0
+      #endif
+
+      #define GRAPH_VERT_LIM TFT_HEIGHT/2 - 1
+
+      #define EXT_BUTTON_WIDTH 30
+
+      #define SCREEN_BUFFER
+
+      #define MAX_SCREEN_BUFFER 21
+
+      #ifndef SCREEN_ORIENTATION
+        #define SCREEN_ORIENTATION 0
+      #endif
+
+      #define CHAR_WIDTH 12
+      #define SCREEN_WIDTH TFT_WIDTH
+      #define SCREEN_HEIGHT TFT_HEIGHT
+      #define HEIGHT_1 TFT_WIDTH
+      #define WIDTH_1 TFT_HEIGHT
+      #define STANDARD_FONT_CHAR_LIMIT (TFT_WIDTH/6)
+      #define TEXT_HEIGHT 16
+      #define BOT_FIXED_AREA 0
+      #define TOP_FIXED_AREA 48
+      #define YMAX 320
+      #define minimum(a,b)     (((a) < (b)) ? (a) : (b))
+      #define MENU_FONT &FreeMono9pt7b
+      #define BUTTON_SCREEN_LIMIT 12
+      #define BUTTON_ARRAY_LEN BUTTON_SCREEN_LIMIT
+      #define STATUS_BAR_WIDTH 16
+      #define LVGL_TICK_PERIOD 6
+
+      #define FRAME_X 100
+      #define FRAME_Y 64
+      #define FRAME_W 120
+      #define FRAME_H 50
+
+      #define REDBUTTON_X FRAME_X
+      #define REDBUTTON_Y FRAME_Y
+      #define REDBUTTON_W (FRAME_W/2)
+      #define REDBUTTON_H FRAME_H
+
+      #define GREENBUTTON_X (REDBUTTON_X + REDBUTTON_W)
+      #define GREENBUTTON_Y FRAME_Y
+      #define GREENBUTTON_W (FRAME_W/2)
+      #define GREENBUTTON_H FRAME_H
+
+      #define STATUSBAR_COLOR 0x4A49
+
+      #define KIT_LED_BUILTIN 13
+    #endif
+
     #ifdef MARAUDER_V7
       #define CHAN_PER_PAGE 7
 
@@ -2101,7 +2216,7 @@
 
   #if defined(MARAUDER_CYD_2USB)
     #define BANNER_TIME 100
-    
+
     #define COMMAND_PREFIX "!"
     
     // Keypad start position, key sizes and spacing
@@ -2116,6 +2231,24 @@
     #define ICON_H 22
     #define BUTTON_PADDING 22
     //#define BUTTON_ARRAY_LEN 5
+  #endif
+
+  #if defined(CYD_2432S022)
+    #define BANNER_TIME 100
+
+    #define COMMAND_PREFIX "!"
+
+    // Same 240x320 full-screen menu geometry as other portrait CYD boards.
+    #define KEY_X 120
+    #define KEY_Y 50
+    #define KEY_W 240
+    #define KEY_H 22
+    #define KEY_SPACING_X 0
+    #define KEY_SPACING_Y 1
+    #define KEY_TEXTSIZE 1
+    #define ICON_W 22
+    #define ICON_H 22
+    #define BUTTON_PADDING 22
   #endif
 
   #if defined(MARAUDER_CYD_3_5_INCH)
